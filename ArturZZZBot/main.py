@@ -2,22 +2,41 @@ import requests
 import telebot
 import API
 import os
+import asyncio
+import aiohttp
+import aiofiles
 
 bot = telebot.TeleBot(API.botAPI)
-
-
+# 86AAONZF6sU
+'''
 def download_video(video_url, file_name):
     try:
-        response = requests.get(video_url, stream=True)
-        response.raise_for_status()
+        response = requests.get(url=video_url, stream=True)
         with open(file_name, 'wb') as file:
-            for chunk in response.iter_content(chunk_size= 1024 * 1024):
+            for chunk in response.iter_content(chunk_size=1024):
                 if chunk:
                     file.write(chunk)
         return file_name
     except Exception as e:
         print(f'Ошибка загрусзки видео: {e}')
         return 0
+'''
+
+async def download_video(video_url, file_name):
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(video_url) as response:
+                if response.status == 200:
+                    async with aiofiles.open(file_name, 'wb') as file:
+                        while True:
+                            chunk = await response.content.read(1024*1024)  # 1 MB
+                            if not chunk:
+                                break
+                            await file.write(chunk)
+                    return file_name
+    except Exception as e:
+        print(f"Ошибка при загрузке видео: {e}")
+        return None
 
 @bot.message_handler(content_types=['text'])
 def main(message):
@@ -38,12 +57,13 @@ def main(message):
         data = response.json()
 
         #video url
-        video_url = data['videos']['items'][3]['url']
-        video_name = "video.mp4"
+        video_url = data['audios']['items'][1]['url']
+        video_name = "video.mp3"
 
         #downloading video
+        bot.send_message(message.chat.id, f'Нашел видео, его название: {data["title"]}')
         bot.send_message(message.chat.id, f'Скачиваю видео...')
-        video_path = download_video(video_url, video_name)
+        video_path = asyncio.run(download_video(video_url, video_name))
 
         if video_path:
             with open(video_path, 'rb') as video_file:
@@ -54,7 +74,7 @@ def main(message):
 
 
     except Exception as e:
-        bot.send_message(message.chat.id, f'Произошла ошибка: {str(e)}')
+        print(f'Произошла ошибка: {str(e)}')
 
 
 
