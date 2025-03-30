@@ -1,4 +1,4 @@
-from API import *
+from TOKEN import *
 
 bot = Bot(token=botAPI)
 dp = Dispatcher()
@@ -12,6 +12,7 @@ async def start(message: types.Message, state: FSMContext):
     await message.answer(f'Привет, {message.from_user.first_name}, отправь мне ссылку на видео с ютуба и я скачаю и отправлю его для тебя в формате аудио!')
     await state.set_state(Form.waiting_for_text)
 
+'''
 @dp.inline_query()
 async def handle_inline_query(inline_query: types.InlineQuery):
     query = inline_query.query.strip()
@@ -62,6 +63,7 @@ async def handle_inline_query(inline_query: types.InlineQuery):
         finally:
             if audio_path and os.path.exists(audio_path):
                 os.remove(audio_path)
+'''
 
 @dp.message(StateFilter(Form.waiting_for_text))
 async def your_handler(message: types.Message, state: FSMContext):
