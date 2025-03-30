@@ -12,6 +12,57 @@ async def start(message: types.Message, state: FSMContext):
     await message.answer(f'Привет, {message.from_user.first_name}, отправь мне ссылку на видео с ютуба и я скачаю и отправлю его для тебя в формате аудио!')
     await state.set_state(Form.waiting_for_text)
 
+@dp.inline_query()
+async def handle_inline_query(inline_query: types.InlineQuery):
+    query = inline_query.query.strip()
+    results = []
+
+    if not query:
+        results.extend([
+            types.InlineQueryResultArticle(
+                id='NoURL',
+                title='Insert here a video URL',
+                input_message_content=types.InputTextMessageContent(
+                    message_text=f'Insert here like @ArtursZZZBot <URL>',
+                )
+            )
+        ])
+    else:
+        url = query.strip()
+        results.append(
+            types.InlineQueryResultArticle(
+                id="YesURL",
+                title=f"AAA",
+                input_message_content=types.InputTextMessageContent(
+                    message_text=f'AAA!'
+                ),
+            )
+        )
+        try:
+            audio_path = await download_video(query)
+            if not audio_path or not os.path.exists(audio_path):
+                raise FileNotFoundError
+
+            result = InlineQueryResultAudio(
+                id="1",
+                audio_url=url,
+                title=os.path.basename(audio_path),
+            )
+
+            await inline_query.answer(results=[result], cache_time=0)
+
+        except Exception as e:
+            print(f"Ошибка: {e}")
+            await inline_query.answer(
+                results=[],
+                switch_pm_text="Ошибка загрузки",
+                switch_pm_parameter="error",
+            )
+
+        finally:
+            if audio_path and os.path.exists(audio_path):
+                os.remove(audio_path)
+
 @dp.message(StateFilter(Form.waiting_for_text))
 async def your_handler(message: types.Message, state: FSMContext):
     url = message.text
