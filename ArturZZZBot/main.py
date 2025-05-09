@@ -22,13 +22,13 @@ async def your_handler(message: types.Message, state: FSMContext):
         try:
             audio_file = FSInputFile(audio_path)
             await message.answer_audio(audio_file, caption="Ваше аудио ♪ \nСкачано с помощью @ArtursZZZBot")
+            os.remove(audio_path)
         except Exception as e:
             await message.reply("Ошибка отправки (аудиофайл превысил 50МБ)")
             print(f"Ошибка: {e}")
             await state.set_state(Form.waiting_for_text)
         finally:
             await asyncio.sleep(1)
-            os.remove(audio_path)
     else:
         await message.reply("Не удалось скачать аудио")
 
@@ -61,4 +61,5 @@ async def download_video(url):
 
 
 if __name__ == '__main__':
+    print('started')
     dp.run_polling(bot)
